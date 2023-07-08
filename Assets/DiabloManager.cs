@@ -6,6 +6,7 @@ public class DiabloManager : MonoBehaviour
 {
     [Header("Player")]
     [HideInInspector] public UnityEvent OnPlayerMove;
+    [HideInInspector] public UnityEvent<bool> OnGameEnd;
     public DiabloPlayer Player;
     public Vector2 PlayerPosition;
 
@@ -16,11 +17,12 @@ public class DiabloManager : MonoBehaviour
     public TileGenerator TileGenerator;
 
     private bool _isPaused = false;
+
     public bool IsPaused => _isPaused;
 
     private void Awake()
     {
-        Initiatialize();
+        Initialize();
         ReferenceHolder.TryRegister(this);
     }
 
@@ -43,10 +45,11 @@ public class DiabloManager : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.DownArrow))
         {
             MovePlayer(Direction.Down);
-        }
+        } 
         else if (Input.GetKeyDown(KeyCode.Space))
         {
             Player.PlayAttackAnim();
+            Player.LevelUp();
         }
         else if (Input.GetKeyDown(KeyCode.LeftShift))
         {
@@ -54,11 +57,15 @@ public class DiabloManager : MonoBehaviour
         }
     }
 
-    public void Initiatialize()
+    public void Initialize()
     {
         TileGenerator.Initialize(this);
         TileGenerator.OnTileMoving.AddListener(SetPause);
         TileGenerator.OnTileMoveEnd.AddListener(OnUpdatePlayerPosition);
+
+        OnGameEnd.AddListener(isGameClear => SetPause(true));
+        Player.OnDeath.AddListener(()=>OnGameEnd.Invoke(false));
+        Player.OnMaxLevel.AddListener(()=>OnGameEnd.Invoke(true));
     }
 
     public void SetPause(bool isPause)

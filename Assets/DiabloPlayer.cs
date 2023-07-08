@@ -10,7 +10,7 @@ public class DiabloPlayer : MonoBehaviour
     public UnityEvent OnDeath = new();
 
     public UnityEvent<int> OnLevelUpdate = new();
-    public UnityEvent<int> OnHealthUpdate = new();
+    public UnityEvent<int, int> OnHealthUpdate = new();
 
     public int Level = 1;
     public int MaxLevel = MAX_LEVEL;
@@ -22,7 +22,14 @@ public class DiabloPlayer : MonoBehaviour
 
     private void Awake()
     {
-        _animator = GetComponent<Animator>();    
+        _animator = GetComponent<Animator>();
+        ReferenceHolder.Request<DiabloUIManager>(Initialize);
+    }
+
+    private void Initialize(DiabloUIManager diabloUIManager)
+    {
+        var healthUI = diabloUIManager.PlayerHealthUI;
+        OnHealthUpdate.AddListener(healthUI.SetHealth);
     }
 
     public void LevelUp()
@@ -30,11 +37,10 @@ public class DiabloPlayer : MonoBehaviour
         if (Level < MaxLevel)
         {
             Level++;
-            Health = MAX_HEALTH;
 
             LevelUpEffect.Play();
             OnLevelUpdate.Invoke(Level);
-            OnHealthUpdate.Invoke(Health);
+            SetHeath(MAX_HEALTH);
         }
         else if (Level == MaxLevel)
         {
@@ -45,14 +51,19 @@ public class DiabloPlayer : MonoBehaviour
 
     public void GetDamaged(int damage)
     {
-        Health = Mathf.Clamp(Health - damage, 0, Health);
-        OnHealthUpdate.Invoke(Health);
+        SetHeath(Health - damage);
         if (Health <= 0)
         {
             Death();
             OnDeath.Invoke();
         }
         _animator.SetTrigger("tHit");
+    }
+
+    private void SetHeath(int health)
+    {
+        Health = Mathf.Clamp(health, 0, MAX_HEALTH);
+        OnHealthUpdate.Invoke(Health, MAX_HEALTH);
     }
 
     private void Death()
