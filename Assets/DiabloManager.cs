@@ -8,6 +8,7 @@ public class DiabloManager : MonoBehaviour
     [HideInInspector] public UnityEvent OnPlayerMove;
     [HideInInspector] public UnityEvent<bool> OnGameEnd;
     public DiabloPlayer Player;
+    public DirectionKeyController KeyController;
     public Vector2 PlayerPosition;
 
     [Header("Monster")]
@@ -23,30 +24,13 @@ public class DiabloManager : MonoBehaviour
     private void Awake()
     {
         Initialize();
-        ReferenceHolder.TryRegister(this);
     }
 
     private void Update()
     {
         if (_isPaused) { return; }
 
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
-        {
-            MovePlayer(Direction.Left);
-        }
-        else if (Input.GetKeyDown(KeyCode.RightArrow))
-        {
-            MovePlayer(Direction.Right);
-        }
-        else if (Input.GetKeyDown(KeyCode.UpArrow))
-        {
-            MovePlayer(Direction.Up);
-        }
-        else if (Input.GetKeyDown(KeyCode.DownArrow))
-        {
-            MovePlayer(Direction.Down);
-        } 
-        else if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             Player.PlayAttackAnim();
             Player.LevelUp();
@@ -63,9 +47,40 @@ public class DiabloManager : MonoBehaviour
         TileGenerator.OnTileMoving.AddListener(SetPause);
         TileGenerator.OnTileMoveEnd.AddListener(OnUpdatePlayerPosition);
 
+        Player.OnDeath.AddListener(() => OnGameEnd.Invoke(false));
+        Player.OnMaxLevel.AddListener(() => OnGameEnd.Invoke(true));
+
         OnGameEnd.AddListener(isGameClear => SetPause(true));
-        Player.OnDeath.AddListener(()=>OnGameEnd.Invoke(false));
-        Player.OnMaxLevel.AddListener(()=>OnGameEnd.Invoke(true));
+
+        KeyController.Initialize(this);
+        KeyController.SetDirectionKeys('a', 'd', 'w', 's');
+
+        // intializing ends when inputmanger is retrieved
+        ReferenceHolder.Request<InputManager>(OnRetrieveInputManager);
+    }
+
+    private void OnRetrieveInputManager(InputManager inputManager)
+    {
+        inputManager.OnAlphabetInput.AddListener(OnAlphabetInput);
+        ReferenceHolder.TryRegister(this);
+    }
+
+    public void OnAlphabetInput(char inputKey)
+    {
+        if (_isPaused) { return; }
+
+        Direction dir = KeyController.InputKeyboard(inputKey);
+        if (dir == Direction.None) { return; }
+        MovePlayer(dir);
+    }
+
+    private void MovePlayer(Direction direction)
+    {
+        if (_isPaused) { return; }
+
+        Player.PlayMoveAnim();
+        Player.FaceDirection(direction);
+        TileGenerator.MoveToDirection(direction);
     }
 
     public void SetPause(bool isPause)
@@ -77,13 +92,5 @@ public class DiabloManager : MonoBehaviour
     {
         PlayerPosition = TileGenerator.CurrentTilePos;
         OnPlayerMove.Invoke();
-    }
-
-    private void MovePlayer(Direction direction)
-    {
-        if (_isPaused) { return; }
-
-        Player.PlayMoveAnim();
-        TileGenerator.MoveToDirection(direction);
     }
 }

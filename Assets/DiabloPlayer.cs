@@ -20,18 +20,6 @@ public class DiabloPlayer : MonoBehaviour
 
     [SerializeField] public Animator _animator;
 
-    private void Awake()
-    {
-        _animator = GetComponent<Animator>();
-        ReferenceHolder.Request<DiabloUIManager>(Initialize);
-    }
-
-    private void Initialize(DiabloUIManager diabloUIManager)
-    {
-        var healthUI = diabloUIManager.PlayerHealthUI;
-        OnHealthUpdate.AddListener(healthUI.SetHealth);
-    }
-
     public void LevelUp()
     {
         if (Level < MaxLevel)
@@ -79,5 +67,17 @@ public class DiabloPlayer : MonoBehaviour
     public void PlayAttackAnim()
     {
         _animator.SetTrigger("tAttack");
+    }
+
+    public void FaceDirection(Direction direction)
+    {
+        if (direction == Direction.Left)
+        {
+            transform.localScale = new Vector3(-1, 1, 1);
+        }
+        else if (direction == Direction.Right)
+        {
+            transform.localScale = new Vector3(1, 1, 1);
+        }
     }
 }
