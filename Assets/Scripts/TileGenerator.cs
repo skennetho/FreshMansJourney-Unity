@@ -5,36 +5,79 @@ using UnityEngine.Events;
 
 public class TileGenerator : MonoBehaviour
 {
-    public UnityEvent<bool> OnTileMoving = new();
+    // constants
+    private readonly int[,] _directionMultiplier = new int[4, 2] { { -1, 0 }, { 1, 0 }, { 0, 1 }, { 0, -1 } };
 
+    // events
+    public UnityEvent<bool> OnTileMoving = new();
+    public UnityEvent OnTileMoveEnd = new();
+
+    [Header("Generator Setting")]
     [SerializeField] private Tile _tilePrefab;
     [SerializeField] private float _horizontalGap;
     [SerializeField] private float _verticalGap;
     [SerializeField] private int _horizontalCount = 10;
     [SerializeField] private int _verticalCount = 10;
 
-    private readonly int[,] _directionMultiplier = new int[4, 2] { { -1, 0 }, { 1, 0 }, { 0, 1 }, { 0, -1 } };
+    [Header("ViewPort")]
+    [SerializeField] private int _viewportRowSize = 7;
+    [SerializeField] private int _viewportColSize = 5;
+    float _moveAnimSeconds = 0.25f;
+
+
+    [Header("Logical MapSize")]
+    [SerializeField] private int _mapRowSize = 10;
+    [SerializeField] private int _mapColSize = 10;
+
 
     private List<Tile> _tiles;
     private bool _isTileMoving;
-    private Vector2 _currentLocation = Vector2.zero;
+    [SerializeField] private Vector2 _currentTilePos;
 
     private DiabloManager _diabloManager;
 
     public bool IsTileMoving => _isTileMoving;
-    public Vector2 CurrentLocation => _currentLocation;
+    public Vector2 CurrentTilePos => _currentTilePos;
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(transform.position - transform.localPosition, new Vector3(_horizontalGap * _viewportRowSize, _verticalGap * _viewportColSize, 0));
+    }
 
     public void Initialize(DiabloManager diabloManager)
     {
         _diabloManager = diabloManager;
-        _diabloManager.OnPlayerMove.AddListener(() => ActivateTileNeerby(_diabloManager.PlayerPosition, 1));
 
-        _horizontalGap = _horizontalGap % 2 == 0 ? _horizontalGap + 1 : _horizontalGap;
-        _verticalGap = _verticalGap % 2 == 0 ? _verticalGap + 1 : _verticalGap;
-        _tiles = _tiles == null? new List<Tile>() : _tiles;
+        _viewportRowSize = _viewportRowSize % 2 == 0 ? _viewportRowSize + 1 : _viewportRowSize;
+        _viewportColSize = _viewportColSize % 2 == 0 ? _viewportColSize + 1 : _viewportColSize;
+
+        _horizontalCount = _viewportRowSize;
+        _verticalCount = _viewportColSize;
+
+        _tiles = _tiles == null ? new List<Tile>() : _tiles;
         _isTileMoving = false;
 
         GenerateTiles(_horizontalCount, _verticalCount);
+    }
+
+    private void GenerateTiles(int horizontalCount, int verticalCount)
+    {
+        ClearTiles();
+
+        for (int i = 0; i < horizontalCount; i++)
+        {
+            for (int j = 0; j < verticalCount; j++)
+            {
+                GameObject tileObject = Instantiate(_tilePrefab.gameObject, transform);
+                Tile tile = tileObject.GetComponent<Tile>();
+                
+                // CurrentPos as Viewport center
+                tile.TilePosition = new Vector2(i - (horizontalCount - 1) / 2, j - (verticalCount - 1) / 2);
+                tile.transform.localPosition = TilePosToRealPosition(tile.TilePosition);
+                _tiles.Add(tile);
+            }
+        }
     }
 
     private void ClearTiles()
@@ -45,26 +88,8 @@ public class TileGenerator : MonoBehaviour
         }
         _tiles.Clear();
         _tiles = new();
-        _currentLocation = Vector2.zero;
+        SetCurrentTilePos(Vector2.zero);
     }
-
-    private void GenerateTiles(int horizontalCount, int verticalCount)
-    {
-        ClearTiles();
-        for (int i = 0; i < horizontalCount; i++)
-        {
-            for (int j = 0; j < verticalCount; j++)
-            {
-                GameObject tileObject = Instantiate(_tilePrefab.gameObject, transform);
-                tileObject.transform.localPosition = new Vector3(_horizontalGap * i, _verticalGap * j, 0);
-
-                Tile tile = tileObject.GetComponent<Tile>();
-                tile.TilePosition = new Vector2(i, j);
-                _tiles.Add(tile);
-            }
-        }
-    }
-
 
     public void MoveToDirection(Direction direction)
     {
@@ -75,52 +100,100 @@ public class TileGenerator : MonoBehaviour
     {
         if (_isTileMoving) return;
 
-        Vector2 targetPos = _diabloManager.PlayerPosition;
-        targetPos.x += xOffset;
-        targetPos.y += yOffset;
-        StartCoroutine(MoveCo(targetPos));
+        Vector2 tilePos = _currentTilePos;
+        tilePos.x += xOffset;
+        tilePos.y += yOffset;
+        StartCoroutine(MoveCo(tilePos));
     }
 
-    public void MoveToPosition(Vector2 nextPos)
+    private IEnumerator MoveCo(Vector2 tilePos)
     {
-        if (_isTileMoving) return;
+        Debug.Log("MoveCo targetPos" + tilePos);
+        tilePos.x = (int)tilePos.x;
+        tilePos.y = (int)tilePos.y;
+        SetCurrentTilePos(tilePos);
 
-        StartCoroutine(MoveCo(nextPos));
-    }
-
-
-    private IEnumerator MoveCo(Vector2 targetPos)
-    {
-        Debug.Log("MoveCo targetPos" + targetPos);
         _isTileMoving = true;
-        _currentLocation = targetPos;
-        OnTileMoving.Invoke(_isTileMoving);
-
-        float moveAnimSeconds = 0.5f;
         float elapsedTime = 0.0f;
-        targetPos.x = (int)targetPos.x *_horizontalGap;
-        targetPos.y = (int)targetPos.y *_verticalGap;
 
-        Vector2 startPos = transform.position;
-        while (elapsedTime < moveAnimSeconds)
+        // move animation
+        Vector2 startPos = transform.localPosition;
+        Vector2 worldPos = -TilePosToRealPosition(tilePos);
+
+        while (elapsedTime < _moveAnimSeconds)
         {
-            transform.position = Vector2.Lerp(startPos, targetPos, elapsedTime / moveAnimSeconds);
+            transform.localPosition = Vector2.Lerp(startPos, worldPos, elapsedTime / _moveAnimSeconds);
             elapsedTime += Time.deltaTime;
-            Debug.Log("elapsedTime: " + elapsedTime);
             yield return new WaitForEndOfFrame();
         }
-        transform.position = targetPos;
-        
+        transform.localPosition = worldPos;
+
         _isTileMoving = false;
         OnTileMoving.Invoke(_isTileMoving);
-
+        OnTileMoveEnd.Invoke();
     }
 
-    private void ActivateTileNeerby(Vector2 basePos, int range)
+    private void SetCurrentTilePos(Vector2 tilePos)
     {
-
+        Debug.Log("TileGenerator SetCurrentPosition" + tilePos);
+        _currentTilePos = tilePos;
+        UpdateViewPort();
+        OnTileMoving.Invoke(_isTileMoving);
     }
 
+    int leftEdge;
+    int rightEdge;
+    int topEdge;
+    int bottomEdge;
+
+    private void UpdateViewPort()
+    {
+        leftEdge = (int)_currentTilePos.x - (_viewportRowSize - 1) / 2;
+        rightEdge = (int)_currentTilePos.x + (_viewportRowSize - 1) / 2;
+        topEdge = (int)_currentTilePos.y + (_viewportColSize - 1) / 2;
+        bottomEdge = (int)_currentTilePos.y - (_viewportColSize - 1) / 2;
+
+        foreach (var tile in _tiles)
+        {
+            // tile이 viewport 밖에 있으면 위치를 바꿔준다.
+            if (tile.TilePosition.x < leftEdge ||
+                tile.TilePosition.x > rightEdge ||
+                tile.TilePosition.y < bottomEdge ||
+                tile.TilePosition.y > topEdge)
+            {
+                Vector2 tilePos = tile.TilePosition;
+                if (tilePos.x < leftEdge)
+                {
+                    tilePos.x += _viewportRowSize;
+                }
+                if (tilePos.x > rightEdge)
+                {
+                    tilePos.x -= _viewportRowSize;
+                }
+                if (tilePos.y < bottomEdge)
+                {
+                    tilePos.y += _viewportColSize;
+                }
+                if (tilePos.y > topEdge)
+                {
+                    tilePos.y -= _viewportColSize;
+                }
+                tile.TilePosition = tilePos;
+                tile.transform.localPosition = TilePosToRealPosition(tilePos);
+                tile.Log();
+            }
+        }
+    }
+
+    private Vector2 TilePosToRealPosition(Vector2 tilePos)
+    {
+        return new Vector2(tilePos.x * _horizontalGap, tilePos.y * _verticalGap);
+    }
+
+    private Vector2 RealPositionToTilePos(Vector2 realPos)
+    {
+        return new Vector2(-realPos.x / _horizontalGap, -realPos.y / _verticalGap);
+    }
 }
 
 public enum Direction

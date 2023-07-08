@@ -26,31 +26,44 @@ public class DiabloManager : MonoBehaviour
 
     private void Update()
     {
+        if (_isPaused) { return; }
+
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            TileGenerator.MoveToDirection(Direction.Right);
+            TileGenerator.MoveToDirection(Direction.Left);
         }
         else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            TileGenerator.MoveToDirection(Direction.Left);
+            TileGenerator.MoveToDirection(Direction.Right);
             PlayerPosition.x++;
         }
         else if (Input.GetKeyDown(KeyCode.UpArrow))
         {
-            TileGenerator.MoveToDirection(Direction.Down);
+            TileGenerator.MoveToDirection(Direction.Up);
             PlayerPosition.y++;
         }
         else if (Input.GetKeyDown(KeyCode.DownArrow))
         {
-            TileGenerator.MoveToDirection(Direction.Up);
+            TileGenerator.MoveToDirection(Direction.Down);
             PlayerPosition.y--;
         }
-        PlayerPosition = TileGenerator.CurrentLocation;
     }
 
     public void Initiatialize()
     {
         TileGenerator.Initialize(this);
+        TileGenerator.OnTileMoving.AddListener(SetPause);
+        TileGenerator.OnTileMoveEnd.AddListener(OnUpdatePlayerPosition);
     }
 
+    public void SetPause(bool isPause)
+    {
+        _isPaused = isPause;
+    }
+
+    private void OnUpdatePlayerPosition()
+    {
+        PlayerPosition = TileGenerator.CurrentTilePos;
+        OnPlayerMove.Invoke();
+    }
 }
