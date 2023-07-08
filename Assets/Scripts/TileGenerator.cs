@@ -16,24 +16,28 @@ public class TileGenerator : MonoBehaviour
     [SerializeField] private Tile _tilePrefab;
     [SerializeField] private float _horizontalGap;
     [SerializeField] private float _verticalGap;
-    [SerializeField] private int _horizontalCount = 10;
-    [SerializeField] private int _verticalCount = 10;
+
 
     [Header("ViewPort")]
     [SerializeField] private int _viewportRowSize = 7;
     [SerializeField] private int _viewportColSize = 5;
-    float _moveAnimSeconds = 0.25f;
+    private float _moveAnimSeconds = 0.25f;
+    private int halfRowSize;
+    private int halfColSize;
+
+    public int leftEdge { private set; get; }
+    public int rightEdge { private set; get; }
+    public int topEdge { private set; get; }
+    public int bottomEdge { private set; get; }
 
 
     [Header("Logical MapSize")]
     [SerializeField] private int _mapRowSize = 10;
     [SerializeField] private int _mapColSize = 10;
 
-
     private List<Tile> _tiles;
     private bool _isTileMoving;
-    [SerializeField] private Vector2 _currentTilePos;
-
+    private Vector2 _currentTilePos;
     private DiabloManager _diabloManager;
 
     public bool IsTileMoving => _isTileMoving;
@@ -52,29 +56,28 @@ public class TileGenerator : MonoBehaviour
         _viewportRowSize = _viewportRowSize % 2 == 0 ? _viewportRowSize + 1 : _viewportRowSize;
         _viewportColSize = _viewportColSize % 2 == 0 ? _viewportColSize + 1 : _viewportColSize;
 
-        _horizontalCount = _viewportRowSize;
-        _verticalCount = _viewportColSize;
-
         _tiles = _tiles == null ? new List<Tile>() : _tiles;
         _isTileMoving = false;
 
-        GenerateTiles(_horizontalCount, _verticalCount);
+        GenerateTiles(_viewportRowSize, _viewportColSize);
     }
 
-    private void GenerateTiles(int horizontalCount, int verticalCount)
+    private void GenerateTiles(int viewportRowSize, int viewportColSize)
     {
         ClearTiles();
+        halfRowSize = (viewportRowSize - 1) / 2;
+        halfColSize = (viewportColSize - 1) / 2;
 
-        for (int i = 0; i < horizontalCount; i++)
+        for (int i = 0; i < viewportRowSize; i++)
         {
-            for (int j = 0; j < verticalCount; j++)
+            for (int j = 0; j < viewportColSize; j++)
             {
                 GameObject tileObject = Instantiate(_tilePrefab.gameObject, transform);
                 Tile tile = tileObject.GetComponent<Tile>();
-                
+
                 // CurrentPos as Viewport center
-                tile.TilePosition = new Vector2(i - (horizontalCount - 1) / 2, j - (verticalCount - 1) / 2);
-                tile.transform.localPosition = TilePosToRealPosition(tile.TilePosition);
+                tile.TilePosition = new Vector2(i - (viewportRowSize - 1) / 2, j - (viewportColSize - 1) / 2);
+                tile.transform.localPosition = TilePosToLocalPosition(tile.TilePosition);
                 _tiles.Add(tile);
             }
         }
@@ -87,7 +90,6 @@ public class TileGenerator : MonoBehaviour
             Destroy(tile);
         }
         _tiles.Clear();
-        _tiles = new();
         SetCurrentTilePos(Vector2.zero);
     }
 
@@ -118,15 +120,15 @@ public class TileGenerator : MonoBehaviour
 
         // move animation
         Vector2 startPos = transform.localPosition;
-        Vector2 worldPos = -TilePosToRealPosition(tilePos);
+        Vector2 localPos = -TilePosToLocalPosition(tilePos);
 
         while (elapsedTime < _moveAnimSeconds)
         {
-            transform.localPosition = Vector2.Lerp(startPos, worldPos, elapsedTime / _moveAnimSeconds);
+            transform.localPosition = Vector2.Lerp(startPos, localPos, elapsedTime / _moveAnimSeconds);
             elapsedTime += Time.deltaTime;
             yield return new WaitForEndOfFrame();
         }
-        transform.localPosition = worldPos;
+        transform.localPosition = localPos;
 
         _isTileMoving = false;
         OnTileMoving.Invoke(_isTileMoving);
@@ -137,29 +139,22 @@ public class TileGenerator : MonoBehaviour
     {
         Debug.Log("TileGenerator SetCurrentPosition" + tilePos);
         _currentTilePos = tilePos;
+
+        leftEdge = (int)_currentTilePos.x - halfRowSize;
+        rightEdge = (int)_currentTilePos.x + halfRowSize;
+        topEdge = (int)_currentTilePos.y + halfColSize;
+        bottomEdge = (int)_currentTilePos.y - halfColSize;
+
         UpdateViewPort();
         OnTileMoving.Invoke(_isTileMoving);
     }
 
-    int leftEdge;
-    int rightEdge;
-    int topEdge;
-    int bottomEdge;
-
     private void UpdateViewPort()
     {
-        leftEdge = (int)_currentTilePos.x - (_viewportRowSize - 1) / 2;
-        rightEdge = (int)_currentTilePos.x + (_viewportRowSize - 1) / 2;
-        topEdge = (int)_currentTilePos.y + (_viewportColSize - 1) / 2;
-        bottomEdge = (int)_currentTilePos.y - (_viewportColSize - 1) / 2;
-
         foreach (var tile in _tiles)
         {
             // tile이 viewport 밖에 있으면 위치를 바꿔준다.
-            if (tile.TilePosition.x < leftEdge ||
-                tile.TilePosition.x > rightEdge ||
-                tile.TilePosition.y < bottomEdge ||
-                tile.TilePosition.y > topEdge)
+            if (IsTileInViewport(tile.TilePosition) == false)
             {
                 Vector2 tilePos = tile.TilePosition;
                 if (tilePos.x < leftEdge)
@@ -179,18 +174,23 @@ public class TileGenerator : MonoBehaviour
                     tilePos.y -= _viewportColSize;
                 }
                 tile.TilePosition = tilePos;
-                tile.transform.localPosition = TilePosToRealPosition(tilePos);
+                tile.transform.localPosition = TilePosToLocalPosition(tilePos);
                 tile.Log();
             }
         }
     }
 
-    private Vector2 TilePosToRealPosition(Vector2 tilePos)
+    public bool IsTileInViewport(Vector2 tilePos)
+    {
+        return tilePos.x >= leftEdge && tilePos.x <= rightEdge && tilePos.y >= bottomEdge && tilePos.y <= topEdge;
+    }
+
+    public Vector2 TilePosToLocalPosition(Vector2 tilePos)
     {
         return new Vector2(tilePos.x * _horizontalGap, tilePos.y * _verticalGap);
     }
 
-    private Vector2 RealPositionToTilePos(Vector2 realPos)
+    public Vector2 LocalPositionToTilePos(Vector2 realPos)
     {
         return new Vector2(-realPos.x / _horizontalGap, -realPos.y / _verticalGap);
     }

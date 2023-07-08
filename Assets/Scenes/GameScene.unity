@@ -25876,22 +25876,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: DiabloPlayer
       objectReference: {fileID: 0}
-    - target: {fileID: 3544261841950819613, guid: 433a1a7ddf8e7f346a568590b06eec41, type: 3}
-      propertyPath: m_Color.a
-      value: 0.2901961
-      objectReference: {fileID: 0}
-    - target: {fileID: 3544261841950819613, guid: 433a1a7ddf8e7f346a568590b06eec41, type: 3}
-      propertyPath: m_Color.b
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3544261841950819613, guid: 433a1a7ddf8e7f346a568590b06eec41, type: 3}
-      propertyPath: m_Color.g
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3544261841950819613, guid: 433a1a7ddf8e7f346a568590b06eec41, type: 3}
-      propertyPath: m_Color.r
-      value: 0.9512955
-      objectReference: {fileID: 0}
     - target: {fileID: 3544261841950819614, guid: 433a1a7ddf8e7f346a568590b06eec41, type: 3}
       propertyPath: m_RootOrder
       value: 0
@@ -31001,13 +30985,10 @@ MonoBehaviour:
   _tilePrefab: {fileID: 1508828026191206139, guid: e9310e94246cd664eb5cafeb68c04939, type: 3}
   _horizontalGap: 1.2
   _verticalGap: 1.2
-  _horizontalCount: 1
-  _verticalCount: 3
   _viewportRowSize: 7
   _viewportColSize: 5
   _mapRowSize: 10
   _mapColSize: 10
-  _currentPosition: {x: 0, y: 0}
 --- !u!1 &2132017854
 GameObject:
   m_ObjectHideFlags: 0

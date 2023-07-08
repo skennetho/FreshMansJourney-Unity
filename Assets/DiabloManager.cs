@@ -30,22 +30,27 @@ public class DiabloManager : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            TileGenerator.MoveToDirection(Direction.Left);
+            MovePlayer(Direction.Left);
         }
         else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            TileGenerator.MoveToDirection(Direction.Right);
-            PlayerPosition.x++;
+            MovePlayer(Direction.Right);
         }
         else if (Input.GetKeyDown(KeyCode.UpArrow))
         {
-            TileGenerator.MoveToDirection(Direction.Up);
-            PlayerPosition.y++;
+            MovePlayer(Direction.Up);
         }
         else if (Input.GetKeyDown(KeyCode.DownArrow))
         {
-            TileGenerator.MoveToDirection(Direction.Down);
-            PlayerPosition.y--;
+            MovePlayer(Direction.Down);
+        }
+        else if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Player.PlayAttackAnim();
+        }
+        else if (Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            Player.GetDamaged(10);
         }
     }
 
@@ -65,5 +70,13 @@ public class DiabloManager : MonoBehaviour
     {
         PlayerPosition = TileGenerator.CurrentTilePos;
         OnPlayerMove.Invoke();
+    }
+
+    private void MovePlayer(Direction direction)
+    {
+        if (_isPaused) { return; }
+
+        Player.PlayMoveAnim();
+        TileGenerator.MoveToDirection(direction);
     }
 }

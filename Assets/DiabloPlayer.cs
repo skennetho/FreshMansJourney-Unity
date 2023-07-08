@@ -18,7 +18,12 @@ public class DiabloPlayer : MonoBehaviour
 
     public int Health = MAX_HEALTH;
 
-    public Animator Animator;
+    [SerializeField] public Animator _animator;
+
+    private void Awake()
+    {
+        _animator = GetComponent<Animator>();    
+    }
 
     public void LevelUp()
     {
@@ -44,8 +49,24 @@ public class DiabloPlayer : MonoBehaviour
         OnHealthUpdate.Invoke(Health);
         if (Health <= 0)
         {
+            Death();
             OnDeath.Invoke();
         }
-        Animator.SetTrigger("tDamaged");
+        _animator.SetTrigger("tHit");
+    }
+
+    private void Death()
+    {
+        _animator.SetBool("bDeath", true);
+    }
+
+    public void PlayMoveAnim()
+    {
+        _animator.SetTrigger("tMove");
+    }
+
+    public void PlayAttackAnim()
+    {
+        _animator.SetTrigger("tAttack");
     }
 }
