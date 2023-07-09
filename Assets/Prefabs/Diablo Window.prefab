@@ -17231,6 +17231,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1058713348325138703}
   - component: {fileID: 1058713348325138702}
+  - component: {fileID: 1804206865805502191}
   m_Layer: 0
   m_Name: Diablo Window
   m_TagString: Untagged
@@ -17270,6 +17271,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DAMAGE_WRONG_KEY: 5
+  Timer: {fileID: 1804206865805502191}
   OnPlayerMove:
     m_PersistentCalls:
       m_Calls: []
@@ -17281,6 +17283,25 @@ MonoBehaviour:
   PlayerPosition: {x: 0, y: 0}
   _monsterPrefabs: []
   TileGenerator: {fileID: 1058713347710468160}
+--- !u!114 &1804206865805502191
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1058713348325138696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da53116a238af1d4dbcc75c17b2cc377, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  OnTimeEnd:
+    m_PersistentCalls:
+      m_Calls: []
+  OnTimeUpdate:
+    m_PersistentCalls:
+      m_Calls: []
+  _maxSeconds: 5
 --- !u!1 &1720922784642274916
 GameObject:
   m_ObjectHideFlags: 0

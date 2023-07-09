@@ -4,6 +4,7 @@ using UnityEngine.Events;
 public class GamePlayManager : MonoBehaviour
 {
     public UnityEvent<bool> OnPaused = new();
+    public DiabloManager DiabloManager;
     private bool _isPaused = false;
 
     public bool IsPaused => _isPaused;
@@ -23,16 +24,17 @@ public class GamePlayManager : MonoBehaviour
 
     private void GetESCKey()
     {
-
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (IsPaused)
             {
                 ResumeGame();
+                DiabloManager.Timer.Resume();
             }
             else
             {
                 PauseGame();
+                DiabloManager.Timer.Pause();
             }
         }
     }
