@@ -9,12 +9,11 @@ public class PlayerExpUI : MonoBehaviour
     [SerializeField] private Slider _slider;
 
     private int curr=0;
-    private int max=0;
+    private int max=1;
     private int level = 0;
 
     public void OnExpChange(int curr, int max)
     {
-        _slider.DOValue((float)curr / max, 0.2f);
         this.curr = curr;
         this.max = max;
         UpdateExpText();
@@ -28,6 +27,8 @@ public class PlayerExpUI : MonoBehaviour
 
     private void UpdateExpText()
     {
-        _expText.text = $"Level {level} Exp{curr}/{max}";
+        _slider.value = (float)curr / max;
+        Debug.Log($"exp {curr} / {max} : " + ((float)curr / max));
+        _expText.text = $"Level{level} Exp:{curr}/{max}";
     }
 }

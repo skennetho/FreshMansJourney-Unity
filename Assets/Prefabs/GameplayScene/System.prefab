@@ -93,6 +93,7 @@ MonoBehaviour:
   OnPaused:
     m_PersistentCalls:
       m_Calls: []
+  DiabloManager: {fileID: 0}
 --- !u!1 &8405351382370161517
 GameObject:
   m_ObjectHideFlags: 0

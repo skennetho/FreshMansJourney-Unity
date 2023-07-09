@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -19,7 +20,7 @@ public class DiabloPlayer : MonoBehaviour
 
     public int Health = MAX_HEALTH;
     public int Exp = 0;
-    public int MaxExp = 0;
+    public int MaxExp = 1;
 
     [SerializeField] public Animator _animator;
 
@@ -33,7 +34,7 @@ public class DiabloPlayer : MonoBehaviour
             OnLevelUpdate.Invoke(Level);
             SetHeath(MAX_HEALTH);
 
-            MaxExp = (Level - 1) / 2;
+            MaxExp = Level / 2 + 1;
             Exp = 0;
             OnExpChange.Invoke(Exp, MaxExp);
         }
@@ -66,6 +67,7 @@ public class DiabloPlayer : MonoBehaviour
         Exp += exp;
         if (Exp >= MaxExp)
         {
+            OnExpChange.Invoke(Exp, MaxExp);
             LevelUp();
         }
         else

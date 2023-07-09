@@ -53,7 +53,6 @@ public class Tile : MonoBehaviour
                 HideMonsters();
                 break;
             case TileType.Monster:
-                Debug.Log("Monster!", gameObject);
                 _tileSprite.sprite = GetNormalSprite();
                 if (_currentMonster == null)
                 {
@@ -97,10 +96,8 @@ public class Tile : MonoBehaviour
 
         _currentMonster = _monsters[Random.Range(0, _monsters.Count)];
         _currentMonster.gameObject.SetActive(true);
-        Debug.Log(_currentMonster.gameObject.name, _currentMonster.gameObject);
         _currentMonster.OnDeath = () =>
         {
-            Debug.Log("Monster died!", gameObject);
             SetTileType(TileType.Normal);
         };
     }
