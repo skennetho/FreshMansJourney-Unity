@@ -4,23 +4,30 @@ using UnityEngine;
 
 public class Tile : MonoBehaviour
 {
+    private const int SPAWN_COOLDOWN_MAX = 40;
+    private const int SPAWN_COOLDOWN_MIN = 10;
+
     public Vector2 TilePosition;
     public Vector2 MapPosition;
 
-    [SerializeField] private List<GameObject> _monsters;
+    [SerializeField] private List<Monster> _monsters;
     private SpriteRenderer _tileSprite;
     private TileType _currentType = TileType.Normal;
     private TileGenerator _tileGenerator; // need to get closed tiles type and sprites
 
+    private int _spawnCooldown = SPAWN_COOLDOWN_MIN;
+    private Monster _currentMonster;
+
     public TileType TileType => _currentType;
+    public Monster CurrentMonster => _currentMonster;
 
     private void OnDrawGizmos()
     {
-        Handles.color = Color.black;
-        Handles.Label(transform.position, $"[{(int)TilePosition.x},{(int)TilePosition.y}]", new GUIStyle() { fontSize = 10 });
-
-        Handles.color = Color.green;
-        Handles.Label(transform.position + Vector3.down * 0.5f, $"[{(int)MapPosition.x},{(int)MapPosition.y}]", new GUIStyle() { fontSize = 10 });
+        GUIStyle style = new GUIStyle() { fontSize = 10 };
+        style.normal.textColor = _currentType == TileType.Monster ? Color.red : Color.green;
+        Handles.Label(transform.position, $"[{(int)TilePosition.x},{(int)TilePosition.y}]", style);
+        Handles.Label(transform.position + Vector3.down * 0.3f, $"[{(int)MapPosition.x},{(int)MapPosition.y}]", new GUIStyle() { fontSize = 10 });
+        Handles.Label(transform.position + Vector3.down * 0.6f, $"Cooldown:{_spawnCooldown}", new GUIStyle() { fontSize = 10 });
     }
 
     private void Awake()
@@ -31,6 +38,7 @@ public class Tile : MonoBehaviour
     public void SetTileGenerator(TileGenerator tileGenerator)
     {
         _tileGenerator = tileGenerator;
+        _spawnCooldown = Random.Range(SPAWN_COOLDOWN_MIN, SPAWN_COOLDOWN_MAX);
     }
 
     public void SetTileType(TileType type)
@@ -40,37 +48,78 @@ public class Tile : MonoBehaviour
         {
             case TileType.Normal:
                 _tileSprite.sprite = GetNormalSprite();
+                HideMonsters();
                 break;
             case TileType.Monster:
-                SpawnRandomMonster();
+                Debug.Log("Monster!", gameObject);
                 _tileSprite.sprite = GetNormalSprite();
+                if (_currentMonster == null)
+                {
+                    SpawnRandomMonster();
+                }
                 break;
             case TileType.Blocked:
                 _tileSprite.sprite = GetBlockedSprite();
+                HideMonsters();
                 break;
         }
     }
 
-    public void SpawnRandomMonster()
+    public void OnViewPort()
     {
+        switch (_currentType)
+        {
+            case TileType.Normal:
+                if (_tileGenerator.CurrentTilePos == TilePosition)
+                {
+                    return;
+                }
+
+                if (_spawnCooldown > 0)
+                {
+                    _spawnCooldown--;
+                }
+                else
+                {
+                    SpawnRandomMonster();
+                    _spawnCooldown = Random.Range(SPAWN_COOLDOWN_MIN, SPAWN_COOLDOWN_MAX);
+                }
+                break;
+        }
+    }
+
+    private void SpawnRandomMonster()
+    {
+        HideMonsters();
         _currentType = TileType.Monster;
 
-        var monsterObj = _monsters[Random.Range(0, _monsters.Count)];
+        _currentMonster = _monsters[Random.Range(0, _monsters.Count)];
+        _currentMonster.gameObject.SetActive(true);
+        Debug.Log(_currentMonster.gameObject.name, _currentMonster.gameObject);
+        _currentMonster.OnDeath = () =>
+        {
+            Debug.Log("Monster died!", gameObject);
+            SetTileType(TileType.Normal);
+        };
+    }
+
+    private void HideMonsters()
+    {
         foreach (var monster in _monsters)
         {
-            monster.SetActive(false);
+            monster.gameObject.SetActive(false);
         }
-        monsterObj.SetActive(true);
+        _currentMonster = null;
     }
 
     private Sprite GetNormalSprite()
     {
         int s = Random.Range(0, 3);
-        if(s == 1)
+        if (s == 1)
         {
             return _tileGenerator.Normal1;
         }
-        else if(s == 2)
+        else if (s == 2)
         {
             return _tileGenerator.Normal2;
         }
@@ -88,70 +137,44 @@ public class Tile : MonoBehaviour
         bool top = _tileGenerator.GetTileType(MapPosition + Vector2.up) == TileType.Blocked;
         bool bottom = _tileGenerator.GetTileType(MapPosition + Vector2.down) == TileType.Blocked;
 
+
         if (left && right && top && bottom)
         {
             return _tileGenerator.BlockedFill;
         }
-        else if (left && right && top)
+        if (left && right && top && !bottom)
         {
             return _tileGenerator.BlockedBottomEdge;
         }
-        else if (left && right && bottom)
+        if (left && right && !top && bottom)
         {
             return _tileGenerator.BlockedTopEdge;
         }
-        else if (left && top && bottom)
+        if (left && !right && top && bottom)
         {
             return _tileGenerator.BlockedRightEdge;
         }
-        else if (right && top && bottom)
+        if (!left && right && top && bottom)
         {
             return _tileGenerator.BlockedLeftEdge;
         }
-        else if (left && right)
-        {
-            return _tileGenerator.BlockedTopLeftCorner;
-        }
-        else if (left && top)
-        {
-            return _tileGenerator.BlockedBottomRightCorner;
-        }
-        else if (left && bottom)
-        {
-            return _tileGenerator.BlockedTopRightCorner;
-        }
-        else if (right && top)
+        if (!left && right && top && !bottom)
         {
             return _tileGenerator.BlockedBottomLeftCorner;
         }
-        else if (right && bottom)
+        if (!left && right && !top && bottom)
         {
             return _tileGenerator.BlockedTopLeftCorner;
         }
-        else if (top && bottom)
+        if (left && !right && top && !bottom)
         {
-            return _tileGenerator.BlockedRightEdge;
+            return _tileGenerator.BlockedBottomRightCorner;
         }
-        else if (left)
+        if(left && !right && !top && bottom)
         {
-            return _tileGenerator.BlockedRightEdge;
+            return _tileGenerator.BlockedTopRightCorner;
         }
-        else if (right)
-        {
-            return _tileGenerator.BlockedLeftEdge;
-        }
-        else if (top)
-        {
-            return _tileGenerator.BlockedBottomEdge;
-        }
-        else if (bottom)
-        {
-            return _tileGenerator.BlockedTopEdge;
-        }
-        else
-        {
-            return _tileGenerator.BlockedFill;
-        }   
+        return _tileGenerator.BlockedFill;
     }
 
     public void Log()

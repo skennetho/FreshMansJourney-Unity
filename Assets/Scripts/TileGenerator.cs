@@ -10,6 +10,7 @@ public class TileGenerator : MonoBehaviour
 
     // events
     public UnityEvent<bool> OnTileMoving = new();
+    public UnityEvent OnViewportUpdate = new();
     public UnityEvent OnTileMoveEnd = new();
 
     [Header("Generator Setting")]
@@ -56,12 +57,15 @@ public class TileGenerator : MonoBehaviour
 
 
     private List<Tile> _tiles;
+    private Dictionary<Direction, Tile> _nearByTiles;
     private bool _isTileMoving;
     private Vector2 _currentTilePos;
     private DiabloManager _diabloManager;
+    private int diffX;
 
     public bool IsTileMoving => _isTileMoving;
     public Vector2 CurrentTilePos => _currentTilePos;
+    public Dictionary<Direction, Tile> NearByTiles => _nearByTiles;
 
     private void OnDrawGizmos()
     {
@@ -96,11 +100,20 @@ public class TileGenerator : MonoBehaviour
 
         GenenrateMapData();
         GenerateTiles(_viewportRowSize, _viewportColSize);
+
+        _nearByTiles = new();
+        _nearByTiles.Add(Direction.Left, null);
+        _nearByTiles.Add(Direction.Right, null);
+        _nearByTiles.Add(Direction.Up, null);
+        _nearByTiles.Add(Direction.Down, null);
+        UpdateNearbyTiles();
     }
 
     private void GenenrateMapData()
     {
         _mapData = new TileType[_mapRowSize, _mapColSize];
+
+        // set all tile as normal
         for (int i = 0; i < _mapRowSize; i++)
         {
             for (int j = 0; j < _mapColSize; j++)
@@ -109,16 +122,34 @@ public class TileGenerator : MonoBehaviour
             }
         }
 
-        for (int cnt = 0; cnt < Random.Range(_minBlockedCount, _maxBlockedCount); cnt++)
+        // set blocked area
+        for (int cnt = 0; cnt < UnityEngine.Random.Range(_minBlockedCount, _maxBlockedCount); cnt++)
         {
-            int radius = Random.Range(_minBlockedRadius, _maxBlockedRadius);
-            int row = Random.Range(radius, _mapRowSize - radius);
-            int col = Random.Range(radius, _mapColSize - radius);
+            int radius = UnityEngine.Random.Range(_minBlockedRadius, _maxBlockedRadius);
+            int row = UnityEngine.Random.Range(radius, _mapRowSize - radius);
+            int col = UnityEngine.Random.Range(radius, _mapColSize - radius);
             for (int i = row - radius; i <= row + radius; i++)
             {
                 for (int j = col - radius; j <= col + radius; j++)
                 {
                     _mapData[i, j] = TileType.Blocked;
+                }
+            }
+        }
+
+        // set monster area
+        for (int i = 0; i < _mapRowSize; i++)
+        {
+            for (int j = 0; j < _mapColSize; j++)
+            {
+                if (_mapData[i, j] != TileType.Normal)
+                {
+                    continue;
+                }
+
+                if (UnityEngine.Random.Range(0, 100) < 10)
+                {
+                    _mapData[i, j] = TileType.Monster;
                 }
             }
         }
@@ -143,7 +174,7 @@ public class TileGenerator : MonoBehaviour
                 tile.transform.localPosition = TilePosToLocalPosition(tile.TilePosition);
 
                 // set mapPos and tileType
-                tile.MapPosition = TilePositionToMapPosition(tile.TilePosition);
+                tile.MapPosition = TilePosToMapPos(tile.TilePosition);
                 tile.SetTileType(GetTileType(tile.MapPosition));
             }
         }
@@ -151,19 +182,44 @@ public class TileGenerator : MonoBehaviour
 
     public TileType GetTileType(Vector2 tilePos)
     {
-        tilePos = TilePositionToMapPosition(tilePos);
+        tilePos = TilePosToMapPos(tilePos);
         return _mapData[(int)tilePos.x, (int)tilePos.y];
     }
 
-    private Vector2 TilePositionToMapPosition(Vector2 tilePos)
+    public TileType GetTileType(Direction dir, Vector2 tilePos)
     {
-        // for example if x was -1 and mapRowSize was 10, then it should be 9 and also if x was -11 and mapRowSize was 10, then it should be 9
-        int x = (int)tilePos.x % _mapRowSize;
-        x = x < 0 ? x + _mapRowSize : x;
-        int y = (int)tilePos.y % _mapColSize;
-        y = y < 0 ? y + _mapColSize : y;
-        return new Vector2(x, y);
+        switch (dir)
+        {
+            case Direction.Up:
+                return GetTileType(tilePos + Vector2.up);
+            case Direction.Down:
+                return GetTileType(tilePos + Vector2.down);
+            case Direction.Left:
+                return GetTileType(tilePos + Vector2.left);
+            case Direction.Right:
+                return GetTileType(tilePos + Vector2.right);
+            default:
+                return TileType.Normal;
+        }
     }
+
+    public Tile GetTile(Direction dir, Vector2 tilePos)
+    {
+        tilePos.x += _directionMultiplier[(int)dir, 0];
+        tilePos.y += _directionMultiplier[(int)dir, 1];
+
+        tilePos = TilePosToMapPos(tilePos);
+        foreach (var tile in _tiles)
+        {
+            if (tile.MapPosition == tilePos)
+            {
+                return tile;
+            }
+        }
+        Debug.LogError("GetTile not found");
+        return null;
+    }
+
 
     private void ClearTiles()
     {
@@ -172,7 +228,7 @@ public class TileGenerator : MonoBehaviour
             Destroy(tile);
         }
         _tiles.Clear();
-        SetCurrentTilePos(Vector2.zero);
+        _currentTilePos = Vector2.zero;
     }
 
     #region move related
@@ -190,17 +246,15 @@ public class TileGenerator : MonoBehaviour
         tilePos.y += yOffset;
         StartCoroutine(MoveCo(tilePos));
     }
-
     private IEnumerator MoveCo(Vector2 tilePos)
     {
-        tilePos.x = (int)tilePos.x;
-        tilePos.y = (int)tilePos.y;
         SetCurrentTilePos(tilePos);
 
         _isTileMoving = true;
-        float elapsedTime = 0.0f;
+        OnTileMoving.Invoke(_isTileMoving);
 
         // move animation
+        float elapsedTime = 0.0f;
         Vector2 startPos = transform.localPosition;
         Vector2 localPos = -TilePosToLocalPosition(tilePos);
 
@@ -219,7 +273,10 @@ public class TileGenerator : MonoBehaviour
 
     private void SetCurrentTilePos(Vector2 tilePos)
     {
+        tilePos.x = (int)tilePos.x;
+        tilePos.y = (int)tilePos.y;
         _currentTilePos = tilePos;
+        Debug.Log("current tile pos : " + _currentTilePos);
 
         leftEdge = (int)_currentTilePos.x - halfRowSize;
         rightEdge = (int)_currentTilePos.x + halfRowSize;
@@ -227,7 +284,6 @@ public class TileGenerator : MonoBehaviour
         bottomEdge = (int)_currentTilePos.y - halfColSize;
 
         UpdateViewPort();
-        OnTileMoving.Invoke(_isTileMoving);
     }
 
     private void UpdateViewPort()
@@ -256,15 +312,38 @@ public class TileGenerator : MonoBehaviour
                 }
                 tile.TilePosition = tilePos;
                 tile.transform.localPosition = TilePosToLocalPosition(tilePos);
+                tile.MapPosition = TilePosToMapPos(tilePos);
+                tile.SetTileType(GetTileType(tile.MapPosition));
             }
+            else
+            {
+                tile.OnViewPort();
+            }
+        }
+        UpdateNearbyTiles();
+    }
 
-            tile.MapPosition = TilePositionToMapPosition(tile.TilePosition);
-            tile.SetTileType(GetTileType(tile.MapPosition));
+    private void UpdateNearbyTiles()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            var direction = (Direction)i;
+            _nearByTiles[direction] = GetTile(direction, CurrentTilePos);
         }
     }
     #endregion
 
     #region utils
+    public Vector2 TilePosToMapPos(Vector2 tilePos)
+    {
+        // for example if x was -1 and mapRowSize was 10, then it should be 9 and also if x was -11 and mapRowSize was 10, then it should be 9
+        int x = (int)tilePos.x % _mapRowSize;
+        x = x < 0 ? x + _mapRowSize : x;
+        int y = (int)tilePos.y % _mapColSize;
+        y = y < 0 ? y + _mapColSize : y;
+        return new Vector2(x, y);
+    }
+
     public bool IsTileInViewport(Vector2 tilePos)
     {
         return tilePos.x >= leftEdge && tilePos.x <= rightEdge && tilePos.y >= bottomEdge && tilePos.y <= topEdge;

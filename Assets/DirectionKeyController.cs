@@ -104,4 +104,9 @@ public class DirectionKeyController : MonoBehaviour
             return Direction.None;
         }
     }
+
+    public char GetKey(Direction direction)
+    {
+        return _directionKeys[direction].GetKey();
+    }
 }

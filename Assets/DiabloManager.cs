@@ -5,8 +5,7 @@ using UnityEngine.Events;
 public class DiabloManager : MonoBehaviour
 {
     // constants
-    public int DAMAGE_PER_WRONG_KEY = 5;
-    public int DAMAGE_FROM_MONSTER = 10;
+    public int DAMAGE_WRONG_KEY = 5;
 
     [Header("Player")]
     [HideInInspector] public UnityEvent OnPlayerMove;
@@ -28,22 +27,6 @@ public class DiabloManager : MonoBehaviour
     private void Awake()
     {
         Initialize();
-    }
-
-    private void Update()
-    {
-        if (_isPaused) { return; }
-
-        // test codes
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            Player.PlayAttackAnim();
-            Player.LevelUp();
-        }
-        else if (Input.GetKeyDown(KeyCode.LeftShift))
-        {
-            Player.GetDamaged(DAMAGE_PER_WRONG_KEY);
-        }
     }
 
     public void Initialize()
@@ -77,13 +60,33 @@ public class DiabloManager : MonoBehaviour
         Direction dir = KeyController.InputKeyboard(inputKey);
         if (dir == Direction.None)
         {
-            Player.GetDamaged(DAMAGE_PER_WRONG_KEY);
+            int damage = DAMAGE_WRONG_KEY;
+            for(int i = 0; i < 4; i++)
+            {
+                var nearDir = (Direction)i;
+                var nearTile = TileGenerator.NearByTiles[nearDir];
+
+                if (nearTile.TileType == TileType.Monster)
+                {
+                    nearTile.CurrentMonster.Attack(Player);
+                }
+            }
+
+            Player.GetDamaged(damage);
             return;
         }
 
-        MovePlayer(dir);
-        //KeyController.SetDirectionKeyRandomly(dir);
-        KeyController.SetDirectionKeys('a', 'd', 'w', 's'); //test
+
+        KeyController.SetDirectionKeyRandomly(dir);
+        var dirTile = TileGenerator.NearByTiles[dir];
+        if (dirTile.TileType == TileType.Normal)
+        {
+            MovePlayer(dir);
+        }
+        else if (dirTile.TileType == TileType.Monster)
+        {
+            Player.Attack(dirTile.CurrentMonster);
+        }
     }
 
     private void MovePlayer(Direction direction)
@@ -102,7 +105,27 @@ public class DiabloManager : MonoBehaviour
 
     private void OnUpdatePlayerPosition()
     {
-        PlayerPosition = TileGenerator.CurrentTilePos;
+        PlayerPosition = TileGenerator.TilePosToMapPos(TileGenerator.CurrentTilePos);
+
+        // update new key
+        for (int i = 0; i < 4; i++)
+        {
+            var nearDir = (Direction)i;
+            var nearType = TileGenerator.GetTileType(nearDir, PlayerPosition);
+            if (nearType == TileType.Blocked)
+            {
+                KeyController.SetDirectionKeyNone(nearDir);
+                continue;
+            }
+            else
+            {
+                if (KeyController.GetKey(nearDir) == DirectionKeyController.NONE_KEY_CHAR)
+                {
+                    KeyController.SetDirectionKeyRandomly(nearDir);
+                }
+            }
+        }
+
         OnPlayerMove.Invoke();
     }
 }

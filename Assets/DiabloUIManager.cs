@@ -6,7 +6,7 @@ public class DiabloUIManager : MonoBehaviour
 {
     [Header("Player")]
     public PlayerHealthUI PlayerHealthUI;
-    [SerializeField] private TextMeshProUGUI _levelText;
+    public PlayerExpUI PlayerExpUI;
 
     [Header("For Game End")]
     [SerializeField] private Image _backGround;
@@ -25,11 +25,14 @@ public class DiabloUIManager : MonoBehaviour
     private void OnDiabeloManagerGet(DiabloManager diabloManager)
     {
         _diabloManager = diabloManager;
-        _diabloManager.Player.OnHealthUpdate.AddListener(PlayerHealthUI.SetHealth);
-        PlayerHealthUI.SetHealth(_diabloManager.Player.Health, DiabloPlayer.MAX_HEALTH);
 
-        _diabloManager.Player.OnLevelUpdate.AddListener(OnLevelUP);
-        OnLevelUP(_diabloManager.Player.Level);
+        _diabloManager.Player.OnHealthUpdate.AddListener(PlayerHealthUI.OnHeathChange);
+        PlayerHealthUI.OnHeathChange(_diabloManager.Player.Health, DiabloPlayer.MAX_HEALTH);
+
+        _diabloManager.Player.OnLevelUpdate.AddListener(PlayerExpUI.OnLevelChange);
+        PlayerExpUI.OnLevelChange(_diabloManager.Player.Level);
+        _diabloManager.Player.OnExpChange.AddListener(PlayerExpUI.OnExpChange);
+        PlayerExpUI.OnExpChange(_diabloManager.Player.Exp, _diabloManager.Player.MaxExp);
 
         _diabloManager.OnGameEnd.AddListener(OnGameEnd);
     }
@@ -74,10 +77,5 @@ public class DiabloUIManager : MonoBehaviour
 
         _gameEndText.gameObject.SetActive(true);
         _gameEndText.DOFade(1.0f, 3.0f);
-    }
-
-    private void OnLevelUP(int level)
-    {
-        _levelText.text = $"Level {level}/{_diabloManager.Player.MaxLevel}";
     }
 }
