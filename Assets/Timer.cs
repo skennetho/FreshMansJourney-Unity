@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -9,6 +7,7 @@ public class Timer : MonoBehaviour
     public UnityEvent<float, float> OnTimeUpdate = new();
 
     [SerializeField] private float _maxSeconds = 30;
+    private float _minSec = 1.5f;
 
     private float _currentSecond = 600; //임의의 큰수
 
@@ -20,12 +19,12 @@ public class Timer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(_isPaused) { return; }
+        if (_isPaused) { return; }
 
         _currentSecond -= Time.deltaTime;
         OnTimeUpdate.Invoke(_currentSecond, _maxSeconds);
 
-        if(_currentSecond <= 0)
+        if (_currentSecond <= 0)
         {
             Pause();
             OnTimeEnd.Invoke();
@@ -34,6 +33,10 @@ public class Timer : MonoBehaviour
 
     public void Reset(float maxSeconds)
     {
+        if (maxSeconds < _minSec)
+        {
+            maxSeconds = _minSec;
+        }
         _maxSeconds = maxSeconds;
         Reset();
     }
