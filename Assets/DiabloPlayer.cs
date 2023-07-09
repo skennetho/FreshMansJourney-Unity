@@ -26,7 +26,7 @@ public class DiabloPlayer : MonoBehaviour
 
     private void LevelUp()
     {
-        if (Level < MaxLevel)
+        if (Level < MAX_LEVEL)
         {
             Level++;
 
@@ -38,7 +38,7 @@ public class DiabloPlayer : MonoBehaviour
             Exp = 0;
             OnExpChange.Invoke(Exp, MaxExp);
         }
-        else if (Level == MaxLevel)
+        else if (Level >= MaxLevel)
         {
             Debug.Log("Max level reached");
             OnMaxLevel.Invoke();
