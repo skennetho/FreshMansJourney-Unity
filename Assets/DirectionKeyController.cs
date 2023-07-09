@@ -10,6 +10,7 @@ public class DirectionKeyController : MonoBehaviour
     [SerializeField] private DirectionKey _upKey;
     [SerializeField] private DirectionKey _downKey;
     private Dictionary<Direction, DirectionKey> _directionKeys;
+    private bool[] _usedKeys;
 
 
     public void Initialize(DiabloManager diabloManager)
@@ -20,6 +21,7 @@ public class DirectionKeyController : MonoBehaviour
         _directionKeys.Add(Direction.Up, _upKey);
         _directionKeys.Add(Direction.Down, _downKey);
 
+        _usedKeys = new bool[26];
         SetDirectionKeys('a', 'd', 'w', 's');
     }
 
@@ -29,38 +31,54 @@ public class DirectionKeyController : MonoBehaviour
         {
             return;
         }
-
-        _leftKey.SetKey(leftKey);
-        _rightKey.SetKey(rightKey);
-        _upKey.SetKey(upKey);
-        _downKey.SetKey(downKey);
+        SetKey(Direction.Left, leftKey);
+        SetKey(Direction.Right, rightKey);
+        SetKey(Direction.Up, upKey);
+        SetKey(Direction.Down, downKey);
     }
 
-    public void SetDirectionKeysRandomly()
+    public void SetDirectionKeyRandomly(Direction direction)
     {
-        bool[] alphabets = new bool[26];
-        for (int i = 0; i < 4; i++)
+        int randomIndex = Random.Range(0, 26);
+        while (_usedKeys[randomIndex])
         {
-            int randomIndex = Random.Range(0, alphabets.Length);
-            while (alphabets[randomIndex])
-            {
-                randomIndex = Random.Range(0, alphabets.Length);
-            }
-            alphabets[randomIndex] = true;
-            _directionKeys[(Direction)i].SetKey((char)('a' + randomIndex));
+            randomIndex = Random.Range(0, 26);
         }
+
+        SetKey(direction, (char)('a' + randomIndex));
+    }
+
+    public void SetDirectionKeyNone(Direction direction)
+    {
+        SetKey(direction, NONE_KEY_CHAR);
     }
 
     private bool CheckIfValidKeys(char leftKey, char rightKey, char upKey, char downKey)
     {
-        if (leftKey == rightKey || leftKey == upKey || leftKey == downKey ||
-            rightKey == upKey || rightKey == downKey ||
+        // check if all keys are different
+        if (leftKey == rightKey || leftKey == upKey || leftKey == downKey || 
+            rightKey == upKey || rightKey == downKey || 
             upKey == downKey)
         {
-            Debug.LogError("Invalid Keys");
+            Debug.LogError("All keys must be different");
             return false;
         }
         return true;
+    }
+
+    private void SetKey(Direction direction, char key)
+    {
+        if (_directionKeys[direction].GetKey() != NONE_KEY_CHAR)
+        {
+            _usedKeys[_directionKeys[direction].GetKey() - 'a'] = false;
+        }
+
+        _directionKeys[direction].SetKey(key);
+
+        if (key != NONE_KEY_CHAR)
+        {
+            _usedKeys[_directionKeys[direction].GetKey() - 'a'] = true;
+        }
     }
 
     public Direction InputKeyboard(char inputKey)

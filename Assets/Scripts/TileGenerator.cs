@@ -110,7 +110,6 @@ public class TileGenerator : MonoBehaviour
 
     private IEnumerator MoveCo(Vector2 tilePos)
     {
-        Debug.Log("MoveCo targetPos" + tilePos);
         tilePos.x = (int)tilePos.x;
         tilePos.y = (int)tilePos.y;
         SetCurrentTilePos(tilePos);
@@ -137,7 +136,6 @@ public class TileGenerator : MonoBehaviour
 
     private void SetCurrentTilePos(Vector2 tilePos)
     {
-        Debug.Log("TileGenerator SetCurrentPosition" + tilePos);
         _currentTilePos = tilePos;
 
         leftEdge = (int)_currentTilePos.x - halfRowSize;
@@ -175,7 +173,6 @@ public class TileGenerator : MonoBehaviour
                 }
                 tile.TilePosition = tilePos;
                 tile.transform.localPosition = TilePosToLocalPosition(tilePos);
-                tile.Log();
             }
         }
     }

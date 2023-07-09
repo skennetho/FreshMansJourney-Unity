@@ -82,7 +82,7 @@ public class DiabloManager : MonoBehaviour
         }
 
         MovePlayer(dir);
-        KeyController.SetDirectionKeysRandomly();
+        KeyController.SetDirectionKeyRandomly(dir);
     }
 
     private void MovePlayer(Direction direction)
