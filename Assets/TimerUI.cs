@@ -6,17 +6,8 @@ using UnityEngine.UI;
 public class TimerUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI _timerText;
-    private Slider _slider;
+    [SerializeField] private Slider _slider;
     private string _warnString = "누군가가 낌새를 채기까지";
-
-    private void Awake()
-    {
-        _slider = GetComponent<Slider>();
-        if (_slider == null)
-        {
-            Debug.LogError("TimerUI: No slider component found!");
-        }
-    }
 
     public void OnTimeChanged(float curr, float max)
     {

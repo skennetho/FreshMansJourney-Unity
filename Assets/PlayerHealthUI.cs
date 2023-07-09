@@ -6,16 +6,7 @@ using UnityEngine.UI;
 public class PlayerHealthUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI _healthText;
-    private Slider _slider;
-
-    private void Awake()
-    {
-        _slider = GetComponent<Slider>();
-        if (_slider == null)
-        {
-            Debug.LogError("PlayerHealthUI: No slider component found!");
-        }
-    }
+    [SerializeField] private Slider _slider;
 
     public void OnHeathChange(int curr, int max)
     {

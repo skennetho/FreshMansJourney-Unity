@@ -32,6 +32,12 @@ public class Timer : MonoBehaviour
         }
     }
 
+    public void Reset(float maxSeconds)
+    {
+        _maxSeconds = maxSeconds;
+        Reset();
+    }
+
     public void Reset()
     {
         _currentSecond = _maxSeconds;

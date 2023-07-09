@@ -18,6 +18,16 @@ public class ReferenceHolder : MonoBehaviour
     private static Dictionary<Type, object> _objectDictionary = new();
     private static Dictionary<Type, List<Action<object>>> _actionListDictionary = new();
 
+
+    private void OnDestroy()
+    {
+        _objectDictionary.Clear();
+        _objectDictionary = null;
+
+        _actionListDictionary.Clear();
+        _actionListDictionary = null;
+    }
+
     public static bool TryRegister<T>(T obj) where T : class
     {
         if (_objectDictionary.ContainsKey(typeof(T)))
@@ -61,5 +71,4 @@ public class ReferenceHolder : MonoBehaviour
 
         _actionListDictionary[typeof(T)].Add((o) => action?.Invoke((T)o));
     }
-
 }

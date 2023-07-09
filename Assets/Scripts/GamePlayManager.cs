@@ -11,6 +11,8 @@ public class GamePlayManager : MonoBehaviour
 
     private void Awake()
     {
+        Screen.SetResolution(1920, 1080, FullScreenMode.Windowed);
+
         if (!ReferenceHolder.TryRegister(this))
         {
             Destroy(gameObject);

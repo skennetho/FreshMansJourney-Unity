@@ -23,11 +23,13 @@ public class Tile : MonoBehaviour
 
     private void OnDrawGizmos()
     {
+#if UNITY_EDITOR
         GUIStyle style = new GUIStyle() { fontSize = 10 };
         style.normal.textColor = _currentType == TileType.Monster ? Color.red : Color.green;
         Handles.Label(transform.position, $"[{(int)TilePosition.x},{(int)TilePosition.y}]", style);
         Handles.Label(transform.position + Vector3.down * 0.3f, $"[{(int)MapPosition.x},{(int)MapPosition.y}]", new GUIStyle() { fontSize = 10 });
         Handles.Label(transform.position + Vector3.down * 0.6f, $"Cooldown:{_spawnCooldown}", new GUIStyle() { fontSize = 10 });
+#endif
     }
 
     private void Awake()
@@ -170,7 +172,7 @@ public class Tile : MonoBehaviour
         {
             return _tileGenerator.BlockedBottomRightCorner;
         }
-        if(left && !right && !top && bottom)
+        if (left && !right && !top && bottom)
         {
             return _tileGenerator.BlockedTopRightCorner;
         }

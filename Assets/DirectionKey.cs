@@ -5,15 +5,9 @@ using UnityEngine.UI;
 
 public class DirectionKey : MonoBehaviour
 {
-    private TextMeshProUGUI _keyText;
-    private Image _arrowImage;
+    [SerializeField] private TextMeshProUGUI _keyText;
+    [SerializeField] private Image _arrowImage;
     private char _keyCharacter = DirectionKeyController.NONE_KEY_CHAR;
-
-    private void Awake()
-    {
-        _arrowImage = GetComponent<Image>();
-        _keyText = GetComponentInChildren<TextMeshProUGUI>();
-    }
 
     public void SetKey(char key)
     {

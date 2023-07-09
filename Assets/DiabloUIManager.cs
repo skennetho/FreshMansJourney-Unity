@@ -107,7 +107,7 @@ public class DiabloUIManager : MonoBehaviour
 
     private IEnumerator TypeEffectCo()
     {
-        float typeDelay = 0.3f;
+        float typeDelay = 0.1f;
         var wait = new WaitForSeconds(typeDelay);
         var text = _gameEndSubText.text;
         System.Text.StringBuilder sb = new System.Text.StringBuilder();

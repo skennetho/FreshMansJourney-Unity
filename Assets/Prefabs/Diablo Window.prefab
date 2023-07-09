@@ -12808,6 +12808,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c524563ae0479ff4688b2bdadc2c81b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _keyText: {fileID: 899932577}
+  _arrowImage: {fileID: 1407211499}
 --- !u!1 &1963167286
 GameObject:
   m_ObjectHideFlags: 0
@@ -17271,6 +17273,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DAMAGE_WRONG_KEY: 5
+  OnWarningLeftChange:
+    m_PersistentCalls:
+      m_Calls: []
   Timer: {fileID: 1804206865805502191}
   OnPlayerMove:
     m_PersistentCalls:
@@ -17301,7 +17306,7 @@ MonoBehaviour:
   OnTimeUpdate:
     m_PersistentCalls:
       m_Calls: []
-  _maxSeconds: 5
+  _maxSeconds: 3
 --- !u!1 &1720922784642274916
 GameObject:
   m_ObjectHideFlags: 0
@@ -17392,6 +17397,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c524563ae0479ff4688b2bdadc2c81b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _keyText: {fileID: 5523493597230389736}
+  _arrowImage: {fileID: 2578364996616277670}
 --- !u!1 &3530289380518063155
 GameObject:
   m_ObjectHideFlags: 0
@@ -17482,6 +17489,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c524563ae0479ff4688b2bdadc2c81b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _keyText: {fileID: 4680524164728804815}
+  _arrowImage: {fileID: 279149377037835709}
 --- !u!1 &6476848609524955240
 GameObject:
   m_ObjectHideFlags: 0
@@ -17572,6 +17581,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c524563ae0479ff4688b2bdadc2c81b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _keyText: {fileID: 6810852985756995253}
+  _arrowImage: {fileID: 6336670555483519300}
 --- !u!1 &7859159971899509420
 GameObject:
   m_ObjectHideFlags: 0

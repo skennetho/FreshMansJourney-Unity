@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -43,13 +44,23 @@ public class DiabloManager : MonoBehaviour
         Player.OnDeath.AddListener(() => OnGameEnd.Invoke(GameEnd.PlayerDeath));
         Player.OnMaxLevel.AddListener(() => OnGameEnd.Invoke(GameEnd.GameClear));
 
-        OnGameEnd.AddListener(isGameClear => SetPause(true));
+        OnGameEnd.AddListener(isGameClear =>
+        {
+            SetPause(true);
+            Timer.Pause();
+        });
 
         KeyController.Initialize(this);
         KeyController.SetDirectionKeys('a', 'd', 'w', 's');
 
         Timer.Reset();
         Timer.OnTimeEnd.AddListener(WarnTimeEnd);
+        Player.OnLevelUpdate.AddListener(level=> {
+            if (level >= DiabloPlayer.MAX_LEVEL / 2)
+            {
+                Timer.Reset(Timer.MaxSec / 3 * 2);
+            }
+        });
         
         ReferenceHolder.Request<InputManager>(OnGetInputManager);
     }

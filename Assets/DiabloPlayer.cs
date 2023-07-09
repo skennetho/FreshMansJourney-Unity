@@ -33,7 +33,7 @@ public class DiabloPlayer : MonoBehaviour
             OnLevelUpdate.Invoke(Level);
             SetHeath(MAX_HEALTH);
 
-            MaxExp = Level;
+            MaxExp = (Level - 1) / 2;
             Exp = 0;
             OnExpChange.Invoke(Exp, MaxExp);
         }
@@ -64,7 +64,7 @@ public class DiabloPlayer : MonoBehaviour
     private void AddExp(int exp)
     {
         Exp += exp;
-        if(Exp >= MaxExp)
+        if (Exp >= MaxExp)
         {
             LevelUp();
         }
