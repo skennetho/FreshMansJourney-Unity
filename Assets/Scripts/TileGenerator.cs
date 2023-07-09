@@ -34,6 +34,26 @@ public class TileGenerator : MonoBehaviour
     [Header("Logical MapSize")]
     [SerializeField] private int _mapRowSize = 10;
     [SerializeField] private int _mapColSize = 10;
+    [SerializeField] private int _minBlockedRadius = 2;
+    [SerializeField] private int _maxBlockedRadius = 4;
+    [SerializeField] private int _minBlockedCount = 5;
+    [SerializeField] private int _maxBlockedCount = 10;
+    private TileType[,] _mapData;
+
+    [Header("Sprites")]
+    public Sprite Normal1;
+    public Sprite Normal2;
+    public Sprite Normal3;
+    public Sprite BlockedFill;
+    public Sprite BlockedLeftEdge;
+    public Sprite BlockedRightEdge;
+    public Sprite BlockedTopEdge;
+    public Sprite BlockedBottomEdge;
+    public Sprite BlockedTopLeftCorner;
+    public Sprite BlockedBottomLeftCorner;
+    public Sprite BlockedTopRightCorner;
+    public Sprite BlockedBottomRightCorner;
+
 
     private List<Tile> _tiles;
     private bool _isTileMoving;
@@ -47,6 +67,21 @@ public class TileGenerator : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireCube(transform.position - transform.localPosition, new Vector3(_horizontalGap * _viewportRowSize, _verticalGap * _viewportColSize, 0));
+
+
+        // draw blocked area
+        if (_mapData == null) { return; }
+        for (int i = 0; i < _mapRowSize; i++)
+        {
+            for (int j = 0; j < _mapColSize; j++)
+            {
+                if (_mapData[i, j] == TileType.Blocked)
+                {
+                    Gizmos.color = Color.black;
+                    Gizmos.DrawCube(transform.position - transform.localPosition + new Vector3(_horizontalGap * i, _verticalGap * j, 0), new Vector3(_horizontalGap, _verticalGap, 0));
+                }
+            }
+        }
     }
 
     public void Initialize(DiabloManager diabloManager)
@@ -59,7 +94,34 @@ public class TileGenerator : MonoBehaviour
         _tiles = _tiles == null ? new List<Tile>() : _tiles;
         _isTileMoving = false;
 
+        GenenrateMapData();
         GenerateTiles(_viewportRowSize, _viewportColSize);
+    }
+
+    private void GenenrateMapData()
+    {
+        _mapData = new TileType[_mapRowSize, _mapColSize];
+        for (int i = 0; i < _mapRowSize; i++)
+        {
+            for (int j = 0; j < _mapColSize; j++)
+            {
+                _mapData[i, j] = TileType.Normal;
+            }
+        }
+
+        for (int cnt = 0; cnt < Random.Range(_minBlockedCount, _maxBlockedCount); cnt++)
+        {
+            int radius = Random.Range(_minBlockedRadius, _maxBlockedRadius);
+            int row = Random.Range(radius, _mapRowSize - radius);
+            int col = Random.Range(radius, _mapColSize - radius);
+            for (int i = row - radius; i <= row + radius; i++)
+            {
+                for (int j = col - radius; j <= col + radius; j++)
+                {
+                    _mapData[i, j] = TileType.Blocked;
+                }
+            }
+        }
     }
 
     private void GenerateTiles(int viewportRowSize, int viewportColSize)
@@ -67,20 +129,40 @@ public class TileGenerator : MonoBehaviour
         ClearTiles();
         halfRowSize = (viewportRowSize - 1) / 2;
         halfColSize = (viewportColSize - 1) / 2;
-
         for (int i = 0; i < viewportRowSize; i++)
         {
             for (int j = 0; j < viewportColSize; j++)
             {
                 GameObject tileObject = Instantiate(_tilePrefab.gameObject, transform);
                 Tile tile = tileObject.GetComponent<Tile>();
+                tile.SetTileGenerator(this);
+                _tiles.Add(tile);
 
-                // CurrentPos as Viewport center
+                // set tilePos and localPos
                 tile.TilePosition = new Vector2(i - (viewportRowSize - 1) / 2, j - (viewportColSize - 1) / 2);
                 tile.transform.localPosition = TilePosToLocalPosition(tile.TilePosition);
-                _tiles.Add(tile);
+
+                // set mapPos and tileType
+                tile.MapPosition = TilePositionToMapPosition(tile.TilePosition);
+                tile.SetTileType(GetTileType(tile.MapPosition));
             }
         }
+    }
+
+    public TileType GetTileType(Vector2 tilePos)
+    {
+        tilePos = TilePositionToMapPosition(tilePos);
+        return _mapData[(int)tilePos.x, (int)tilePos.y];
+    }
+
+    private Vector2 TilePositionToMapPosition(Vector2 tilePos)
+    {
+        // for example if x was -1 and mapRowSize was 10, then it should be 9 and also if x was -11 and mapRowSize was 10, then it should be 9
+        int x = (int)tilePos.x % _mapRowSize;
+        x = x < 0 ? x + _mapRowSize : x;
+        int y = (int)tilePos.y % _mapColSize;
+        y = y < 0 ? y + _mapColSize : y;
+        return new Vector2(x, y);
     }
 
     private void ClearTiles()
@@ -93,6 +175,7 @@ public class TileGenerator : MonoBehaviour
         SetCurrentTilePos(Vector2.zero);
     }
 
+    #region move related
     public void MoveToDirection(Direction direction)
     {
         MoveToDirection(_directionMultiplier[(int)direction, 0], _directionMultiplier[(int)direction, 1]);
@@ -174,9 +257,14 @@ public class TileGenerator : MonoBehaviour
                 tile.TilePosition = tilePos;
                 tile.transform.localPosition = TilePosToLocalPosition(tilePos);
             }
+
+            tile.MapPosition = TilePositionToMapPosition(tile.TilePosition);
+            tile.SetTileType(GetTileType(tile.MapPosition));
         }
     }
+    #endregion
 
+    #region utils
     public bool IsTileInViewport(Vector2 tilePos)
     {
         return tilePos.x >= leftEdge && tilePos.x <= rightEdge && tilePos.y >= bottomEdge && tilePos.y <= topEdge;
@@ -191,6 +279,7 @@ public class TileGenerator : MonoBehaviour
     {
         return new Vector2(-realPos.x / _horizontalGap, -realPos.y / _verticalGap);
     }
+    #endregion
 }
 
 public enum Direction
@@ -200,4 +289,11 @@ public enum Direction
     Up,
     Down,
     None
+}
+
+public enum TileType
+{
+    Normal,
+    Monster,
+    Blocked,
 }

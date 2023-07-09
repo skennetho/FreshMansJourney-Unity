@@ -17200,8 +17200,24 @@ MonoBehaviour:
   _verticalGap: 1.5
   _viewportRowSize: 7
   _viewportColSize: 5
-  _mapRowSize: 10
-  _mapColSize: 10
+  _mapRowSize: 20
+  _mapColSize: 20
+  _minBlockedRadius: 2
+  _maxBlockedRadius: 4
+  _minBlockedCount: 3
+  _maxBlockedCount: 5
+  Normal1: {fileID: -7369953315678303813, guid: dc747d0a3cdf6594f9f275fdd2a48b4b, type: 3}
+  Normal2: {fileID: -7369953315678303813, guid: dc747d0a3cdf6594f9f275fdd2a48b4b, type: 3}
+  Normal3: {fileID: -7369953315678303813, guid: dc747d0a3cdf6594f9f275fdd2a48b4b, type: 3}
+  BlockedFill: {fileID: -8644279775636323431, guid: dc747d0a3cdf6594f9f275fdd2a48b4b, type: 3}
+  BlockedLeftEdge: {fileID: 5264979163374914166, guid: dc747d0a3cdf6594f9f275fdd2a48b4b, type: 3}
+  BlockedRightEdge: {fileID: 3841374895227053369, guid: dc747d0a3cdf6594f9f275fdd2a48b4b, type: 3}
+  BlockedTopEdge: {fileID: 4753258692078137619, guid: dc747d0a3cdf6594f9f275fdd2a48b4b, type: 3}
+  BlockedBottomEdge: {fileID: 4243927867023665446, guid: dc747d0a3cdf6594f9f275fdd2a48b4b, type: 3}
+  BlockedTopLeftCorner: {fileID: 4680653795402065389, guid: dc747d0a3cdf6594f9f275fdd2a48b4b, type: 3}
+  BlockedBottomLeftCorner: {fileID: 6930148502292774571, guid: dc747d0a3cdf6594f9f275fdd2a48b4b, type: 3}
+  BlockedTopRightCorner: {fileID: -7956832237065629149, guid: dc747d0a3cdf6594f9f275fdd2a48b4b, type: 3}
+  BlockedBottomRightCorner: {fileID: 4080561482957604121, guid: dc747d0a3cdf6594f9f275fdd2a48b4b, type: 3}
 --- !u!1 &1058713348325138696
 GameObject:
   m_ObjectHideFlags: 0
@@ -17250,6 +17266,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ec11ef544b2c0d44a15f2e0cea4ffa2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  DAMAGE_PER_WRONG_KEY: 5
+  DAMAGE_FROM_MONSTER: 10
   OnPlayerMove:
     m_PersistentCalls:
       m_Calls: []
