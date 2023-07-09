@@ -4,6 +4,10 @@ using UnityEngine.Events;
 
 public class DiabloManager : MonoBehaviour
 {
+    // constants
+    public int DAMAGE_PER_WRONG_KEY = 5;
+    public int DAMAGE_FROM_MONSTER = 10;
+
     [Header("Player")]
     [HideInInspector] public UnityEvent OnPlayerMove;
     [HideInInspector] public UnityEvent<bool> OnGameEnd;
@@ -30,6 +34,7 @@ public class DiabloManager : MonoBehaviour
     {
         if (_isPaused) { return; }
 
+        // test codes
         if (Input.GetKeyDown(KeyCode.Space))
         {
             Player.PlayAttackAnim();
@@ -37,7 +42,7 @@ public class DiabloManager : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.LeftShift))
         {
-            Player.GetDamaged(10);
+            Player.GetDamaged(DAMAGE_PER_WRONG_KEY);
         }
     }
 
@@ -70,8 +75,14 @@ public class DiabloManager : MonoBehaviour
         if (_isPaused) { return; }
 
         Direction dir = KeyController.InputKeyboard(inputKey);
-        if (dir == Direction.None) { return; }
+        if (dir == Direction.None)
+        {
+            Player.GetDamaged(DAMAGE_PER_WRONG_KEY);
+            return;
+        }
+
         MovePlayer(dir);
+        KeyController.SetDirectionKeysRandomly();
     }
 
     private void MovePlayer(Direction direction)

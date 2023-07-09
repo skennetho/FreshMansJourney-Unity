@@ -25,7 +25,7 @@ public class DirectionKeyController : MonoBehaviour
 
     public void SetDirectionKeys(char leftKey, char rightKey, char upKey, char downKey)
     {
-        if (!ValidateKeys(leftKey, rightKey, upKey, downKey))
+        if (!CheckIfValidKeys(leftKey, rightKey, upKey, downKey))
         {
             return;
         }
@@ -36,13 +36,28 @@ public class DirectionKeyController : MonoBehaviour
         _downKey.SetKey(downKey);
     }
 
-    private bool ValidateKeys(char leftKey, char rightKey, char upKey, char downKey)
+    public void SetDirectionKeysRandomly()
+    {
+        bool[] alphabets = new bool[26];
+        for (int i = 0; i < 4; i++)
+        {
+            int randomIndex = Random.Range(0, alphabets.Length);
+            while (alphabets[randomIndex])
+            {
+                randomIndex = Random.Range(0, alphabets.Length);
+            }
+            alphabets[randomIndex] = true;
+            _directionKeys[(Direction)i].SetKey((char)('a' + randomIndex));
+        }
+    }
+
+    private bool CheckIfValidKeys(char leftKey, char rightKey, char upKey, char downKey)
     {
         if (leftKey == rightKey || leftKey == upKey || leftKey == downKey ||
             rightKey == upKey || rightKey == downKey ||
             upKey == downKey)
         {
-            Debug.LogError("Invalie Keys");
+            Debug.LogError("Invalid Keys");
             return false;
         }
         return true;
