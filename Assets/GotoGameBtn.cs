@@ -9,7 +9,7 @@ public class GotoGameBtn : MonoBehaviour
 
     private void Awake()
     {
-        Screen.SetResolution(1920, 1080, FullScreenMode.Windowed);
+        Screen.SetResolution(1920, 1080, FullScreenMode.ExclusiveFullScreen);
 
         btn = GetComponent<Button>();
         btn.onClick.AddListener(() => SceneManager.LoadScene("GameScene"));
